@@ -30,19 +30,22 @@ jobs:
           yes | $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --licenses
           yes | $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-      - name: Prepare project folder
-        run: |
-          mkdir -p floating_clock_ready
-          cp -r * floating_clock_ready || true
+      - - name: Unzip and locate Gradle project
+  run: |
+    unzip floating_clock_ready.zip -d project_zip || true
+    # cari folder yang berisi file build.gradle
+    PROJECT_DIR=$(find project_zip -type f -name "build.gradle" -printf '%h\n' | head -n 1)
+    echo "Found project at: $PROJECT_DIR"
+    echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
 
-      - name: Build Debug APK
-        run: |
-          cd floating_clock_ready
-          if [ ! -f gradlew ]; then
-            gradle wrapper
-          fi
-          chmod +x gradlew
-          ./gradlew clean assembleDebug --stacktrace --no-daemon
+- name: Build Debug APK
+  run: |
+    cd $PROJECT_DIR
+    if [ ! -f gradlew ]; then
+      gradle wrapper
+    fi
+    chmod +x gradlew
+    ./gradlew clean assembleDebug --stacktrace --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
